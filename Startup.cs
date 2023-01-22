@@ -28,6 +28,22 @@ namespace MarkIT
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(
+                    name: "AllowOrigin",
+                    builder => {
+                        builder.AllowAnyOrigin()
+                                .AllowAnyMethod()
+                                .AllowAnyHeader();
+                    });
+            });
+
+            var connectionString = Configuration.GetConnectionString("MarkITCon");
+
+            var serverVersion = ServerVersion.AutoDetect(connectionString);
+
+            services.AddDbContext<MarkITContext>(options => options.UseMySql(connectionString, serverVersion));
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -35,7 +51,7 @@ namespace MarkIT
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "MarkIT", Version = "v1" });
             });
 
-            services.AddDbContext<MarkITContext>(options => options.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Initial Catalog=MarkIT;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"));
+            //services.AddDbContext<MarkITContext>(options => options.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Initial Catalog=MarkIT;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,6 +63,8 @@ namespace MarkIT
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MarkIT v1"));
             }
+
+            app.UseCors("AllowOrigin");
 
             app.UseHttpsRedirection();
 
